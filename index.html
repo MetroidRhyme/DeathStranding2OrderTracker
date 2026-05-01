@@ -452,6 +452,53 @@ body::after{
   #main{padding:12px;}
   .logo{font-size:13px;}
 }
+
+@media(max-width:520px){
+  /* Header: logo full-width on top, buttons share second row */
+  #hdr{height:auto;flex-wrap:wrap;padding:8px 12px;gap:6px;}
+  .logo{flex:1 0 100%;font-size:12px;letter-spacing:2px;}
+  .logo sub{letter-spacing:3px;}
+  #hdr .btn{flex:1;font-size:10px;padding:6px 10px;letter-spacing:1px;}
+
+  /* Stats bar */
+  #sbar{height:auto;padding:5px 12px;gap:14px;font-size:9px;}
+
+  /* Main padding */
+  #main{padding:8px;}
+
+  /* Drag handles are unusable on touch */
+  .drag-handle{display:none;}
+
+  /* Major card: collapse summary/meta, always show actions */
+  .maj-hdr{padding:10px 12px;gap:8px;}
+  .maj-name{font-size:11px;letter-spacing:2px;margin-right:0;flex:1;}
+  .maj-summary{display:none;}
+  .maj-meta{display:none;}
+  .maj-acts{opacity:1;}
+
+  /* Minor card: drop grade counts and count, always show actions */
+  .min-hdr{padding:8px 10px;gap:7px;}
+  .min-name{font-size:11px;letter-spacing:1px;}
+  .node-grades{display:none;}
+  .min-cnt{display:none;}
+  .min-acts{opacity:1;}
+
+  /* Order card: route wraps to its own row, best+acts share the row below */
+  .ord-hdr{flex-wrap:wrap;padding:8px 10px;gap:5px;}
+  .ord-num{font-size:11px;min-width:42px;}
+  .ord-route{font-size:10px;}
+  .ord-best{flex:1;}
+  .best-t{font-size:11px;}
+
+  /* Delivery modal grade buttons */
+  .gbtn{width:36px;height:36px;font-size:13px;}
+
+  /* Modal padding */
+  .modal{padding:20px 14px;}
+
+  /* History date column narrower */
+  .hist-date{min-width:100px;font-size:8px;}
+}
 </style>
 </head>
 <body>
