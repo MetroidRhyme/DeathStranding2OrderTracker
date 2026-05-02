@@ -596,8 +596,7 @@ body::after{
     </div>
   </div>
   <div class="fg">
-    <div class="ff"><label class="fl">Minutes</label><input class="fi" id="f-dm" type="number" placeholder="0" min="0"></div>
-    <div class="ff"><label class="fl">Seconds</label><input class="fi" id="f-ds" type="number" placeholder="0" min="0" max="59"></div>
+    <div class="ff"><label class="fl">Total Likes</label><input class="fi" id="f-likes" type="number" placeholder="0" min="0"></div>
   </div>
   <input type="hidden" id="del-oid">
   <div class="macts">
@@ -681,7 +680,7 @@ function getBest(order){
   return [...order.runs].sort((a,b)=>{
     const ga=GRADE_RANK[a.grade]||0, gb=GRADE_RANK[b.grade]||0;
     if(gb!==ga) return gb-ga;
-    return a.time-b.time;
+    return (b.likes||0)-(a.likes||0);
   })[0];
 }
 function gradeHTML(g){
@@ -736,12 +735,9 @@ function saveNodeStar(event,el,minId){
   }
   toast('NODE RATING SAVED');
 }
-function fmtTime(secs){
-  if(secs===null||secs===undefined) return '--';
-  if(secs===0) return '0s';
-  const m=Math.floor(secs/60), s=secs%60;
-  if(m===0) return `${s}s`;
-  return s===0?`${m}m`:`${m}m ${s}s`;
+function fmtLikes(n){
+  if(n===null||n===undefined) return '--';
+  return `${n.toLocaleString()} likes`;
 }
 function fmtDate(iso){
   const d=new Date(iso);
@@ -919,7 +915,7 @@ function renderOrd(order,minId,dir){
     </div>
     <div class="ord-best">
       ${best
-        ?`${gradeHTML(best.grade)}<span class="best-t">${fmtTime(best.time)}</span><span style="font-size:9px;color:var(--text-dim);letter-spacing:1px">${runCount} RUN${runCount!==1?'S':''}</span>`
+        ?`${gradeHTML(best.grade)}<span class="best-t">${fmtLikes(best.likes)}</span><span style="font-size:9px;color:var(--text-dim);letter-spacing:1px">${runCount} RUN${runCount!==1?'S':''}</span>`
         :`<span class="no-runs">NO RUNS YET</span>`}
     </div>
     <div class="ord-acts" onclick="event.stopPropagation()">
@@ -944,7 +940,7 @@ function renderOrd(order,minId,dir){
         ${best?`<div class="del-best">
           <span class="del-best-lbl">BEST</span>
           ${gradeHTML(best.grade)}
-          <span class="del-best-t">${fmtTime(best.time)}</span>
+          <span class="del-best-t">${fmtLikes(best.likes)}</span>
           <span class="del-best-date">${fmtDate(best.at)}</span>
         </div>`:''}
         ${sortedRuns.length>0?`
@@ -957,7 +953,7 @@ function renderOrd(order,minId,dir){
               <div class="hist-row${r.id===best?.id?' hist-best-row':''}">
                 <span class="hist-date">${fmtDate(r.at)}</span>
                 ${gradeHTML(r.grade)}
-                <span class="hist-time">${fmtTime(r.time)}</span>
+                <span class="hist-time">${fmtLikes(r.likes)}</span>
                 ${r.id===best?.id?'<span style="font-size:8px;letter-spacing:2px;color:var(--green);margin-left:auto">BEST</span>':''}
               </div>`).join('')}
           </div>`:''}
@@ -1197,12 +1193,11 @@ const App={
       if(!match){ toast(`ORDER #${num} NOT FOUND`,'err'); return; }
       oid=match.id;
     }
-    const mins=parseInt(document.getElementById('f-dm').value)||0;
-    const secs=parseInt(document.getElementById('f-ds').value)||0;
+    const likes=parseInt(document.getElementById('f-likes').value)||0;
     const o=D.orders.find(x=>x.id===oid);
     if(!o)return;
     if(!o.runs)o.runs=[];
-    o.runs.push({id:uid(),grade:_delGrade,time:mins*60+secs,at:new Date().toISOString()});
+    o.runs.push({id:uid(),grade:_delGrade,likes,at:new Date().toISOString()});
     saveD(); render(); UI.close('m-delivery'); toast('RUN LOGGED');
   }
 };
