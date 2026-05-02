@@ -385,6 +385,30 @@ body::after{
 }
 .mchk:checked+.mlbl{border-color:var(--orange);color:var(--orange);background:rgba(255,140,0,0.1);}
 
+/* type radio buttons */
+.type-grid{display:flex;flex-wrap:wrap;gap:6px;}
+.tchk{display:none;}
+.tlbl{
+  font-size:9px;letter-spacing:2px;padding:3px 9px;
+  border:1px solid var(--border);color:var(--text-dim);
+  cursor:pointer;transition:all .15s;
+  user-select:none;
+}
+.tchk:checked+.tlbl{border-color:var(--cyan);color:var(--cyan);background:rgba(0,212,255,0.1);}
+
+/* order type badge */
+.ord-type{
+  font-size:8px;font-weight:700;letter-spacing:2px;
+  padding:2px 7px;border:1px solid var(--border);
+  color:var(--text-dim);flex-shrink:0;
+}
+
+/* all orders list */
+.ao-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:11px;}
+.ao-row:last-child{border-bottom:none;}
+.ao-num{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--text-bright);min-width:50px;}
+.ao-info{flex:1;color:var(--text-dim);}
+
 /* node half-star rating */
 .node-stars{display:flex;align-items:center;gap:1px;padding:0 6px;cursor:pointer;}
 .hstar{position:relative;display:inline-block;font-size:15px;line-height:1;user-select:none;}
@@ -508,6 +532,7 @@ body::after{
   <button class="btn btn-green" onclick="UI.openLogDel()">LOG RUN</button>
   <button class="btn" onclick="UI.openAddOrder()">+ ADD ORDER</button>
   <button class="btn" onclick="UI.openAddMajor()">+ LOCATION</button>
+  <button class="btn" onclick="UI.openAllOrders()">ALL ORDERS</button>
 </div>
 
 <div id="sbar">
@@ -541,6 +566,15 @@ body::after{
   <div class="fg">
     <div class="ff"><label class="fl">Packages</label><input class="fi" id="f-pkg" type="number" placeholder="1" min="1"></div>
     <div class="ff"><label class="fl">Weight (kg)</label><input class="fi" id="f-wgt" type="number" placeholder="0.0" step="0.1" min="0"></div>
+  </div>
+  <div class="ff" style="margin-bottom:12px">
+    <label class="fl">Type</label>
+    <div class="type-grid">
+      <input type="radio" class="tchk" id="ot-DELIVERY" name="f-type" value="DELIVERY">
+      <label class="tlbl" for="ot-DELIVERY">DELIVERY</label>
+      <input type="radio" class="tchk" id="ot-RETRIEVAL" name="f-type" value="RETRIEVAL">
+      <label class="tlbl" for="ot-RETRIEVAL">RETRIEVAL</label>
+    </div>
   </div>
   <div class="ff" style="margin-bottom:12px">
     <label class="fl">Modifiers</label>
@@ -603,6 +637,15 @@ body::after{
     <button class="btn btn-red" onclick="UI.close('m-delivery')">CANCEL</button>
     <button class="btn btn-green" onclick="App.saveDelivery()">LOG RUN</button>
   </div>
+</div>
+</div>
+
+<!-- ALL ORDERS MODAL -->
+<div class="moverlay" id="m-all-orders">
+<div class="modal">
+  <div class="modal-title">ALL ORDERS</div>
+  <button class="mcls" onclick="UI.close('m-all-orders')">✕</button>
+  <div id="all-orders-list" style="max-height:60vh;overflow-y:auto;margin-top:8px;"></div>
 </div>
 </div>
 
@@ -909,6 +952,7 @@ function renderOrd(order,minId,dir){
   <div class="ord-hdr" onclick="UI.toggleOrd(this)">
     <span class="dir-badge ${dir==='OUT'?'dir-out':'dir-in'}">${dir}</span>
     <span class="ord-num">#${esc(order.onum||order.id.slice(-4))}</span>
+    ${order.type?`<span class="ord-type">${esc(order.type)}</span>`:''}
     <div class="ord-route">
       <strong>${esc(otherName)}</strong>
       ${order.cargo?`<span style="color:var(--text-dim)"> · ${esc(order.cargo)}</span>`:''}
@@ -1047,6 +1091,7 @@ const UI={
     document.getElementById('f-wgt').value='';
     document.getElementById('f-src').value='';
     document.getElementById('f-dst').value='';
+    document.querySelectorAll('.tchk').forEach(r=>r.checked=false);
     UI.open('m-order');
   },
   openEditOrder(oid){
@@ -1063,6 +1108,8 @@ const UI={
     document.getElementById('f-notes').value=o.notes||'';
     document.getElementById('f-src').value=o.srcId||'';
     document.getElementById('f-dst').value=o.dstId||'';
+    document.querySelectorAll('.tchk').forEach(r=>r.checked=false);
+    if(o.type){ const r=document.getElementById(`ot-${o.type}`); if(r)r.checked=true; }
     (o.mods||[]).forEach(m=>{ const cb=document.getElementById(`mc-${m}`); if(cb)cb.checked=true; });
     UI.open('m-order');
   },
@@ -1099,6 +1146,28 @@ const UI={
     document.querySelectorAll('#grade-input .gbtn').forEach(b=>{
       b.classList.toggle('sel',b.dataset.g===g);
     });
+  },
+
+  openAllOrders(){
+    const sorted=[...D.orders].sort((a,b)=>{
+      const na=parseInt(a.onum), nb=parseInt(b.onum);
+      const naNum=isNaN(na)?Infinity:na, nbNum=isNaN(nb)?Infinity:nb;
+      if(naNum!==nbNum) return naNum-nbNum;
+      return (a.onum||'').localeCompare(b.onum||'');
+    });
+    document.getElementById('all-orders-list').innerHTML=
+      sorted.length===0?'<div class="empty">NO ORDERS YET</div>':
+      sorted.map(o=>{
+        const src=getMin(o.srcId), dst=getMin(o.dstId);
+        const best=getBest(o);
+        return `<div class="ao-row">
+          <span class="ao-num">#${esc(o.onum||o.id.slice(-4))}</span>
+          ${o.type?`<span class="ord-type">${esc(o.type)}</span>`:''}
+          <span class="ao-info">${o.cargo?`<strong style="color:var(--text-bright)">${esc(o.cargo)}</strong> · `:''}${src?esc(src.name):'?'} → ${dst?esc(dst.name):'?'}</span>
+          ${best?gradeHTML(best.grade):''}
+        </div>`;
+      }).join('');
+    UI.open('m-all-orders');
   }
 };
 
@@ -1157,12 +1226,14 @@ const App={
     const onum=document.getElementById('f-onum').value.trim();
     if(onum&&D.orders.some(o=>o.onum===onum&&o.id!==_editOid)){ toast('ORDER NUMBER ALREADY EXISTS','err'); return; }
     const mods=MODS.filter(m=>{ const cb=document.getElementById(`mc-${m}`); return cb&&cb.checked; });
+    const typeEl=document.querySelector('.tchk:checked');
     const payload={
       onum:document.getElementById('f-onum').value.trim(),
       cargo:document.getElementById('f-cargo').value.trim(),
       srcId, dstId,
       pkg:parseFloat(document.getElementById('f-pkg').value)||null,
       wgt:parseFloat(document.getElementById('f-wgt').value)||null,
+      type:typeEl?typeEl.value:'',
       mods,
       notes:document.getElementById('f-notes').value.trim()
     };
