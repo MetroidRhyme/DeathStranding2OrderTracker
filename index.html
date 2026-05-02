@@ -403,11 +403,7 @@ body::after{
   color:var(--text-dim);flex-shrink:0;
 }
 
-/* all orders list */
-.ao-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:11px;}
-.ao-row:last-child{border-bottom:none;}
-.ao-num{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--text-bright);min-width:50px;}
-.ao-info{flex:1;color:var(--text-dim);}
+.modal.wide{max-width:780px;}
 
 /* node half-star rating */
 .node-stars{display:flex;align-items:center;gap:1px;padding:0 6px;cursor:pointer;}
@@ -642,10 +638,10 @@ body::after{
 
 <!-- ALL ORDERS MODAL -->
 <div class="moverlay" id="m-all-orders">
-<div class="modal">
-  <div class="modal-title">ALL ORDERS</div>
+<div class="modal wide" style="padding-left:0;padding-right:0;">
+  <div class="modal-title" style="padding-left:28px;padding-right:28px;">ALL ORDERS</div>
   <button class="mcls" onclick="UI.close('m-all-orders')">✕</button>
-  <div id="all-orders-list" style="max-height:60vh;overflow-y:auto;margin-top:8px;"></div>
+  <div id="all-orders-list" style="max-height:70vh;overflow-y:auto;margin-top:8px;"></div>
 </div>
 </div>
 
@@ -845,17 +841,24 @@ function restoreState(){
   });
 }
 
+function refreshAllOrders(){
+  const modal=document.getElementById('m-all-orders');
+  if(modal&&modal.classList.contains('open')) UI.openAllOrders();
+}
+
 function render(){
   captureState();
   updateStats();
   const c=document.getElementById('loc-container');
   if(D.locations.length===0){
     c.innerHTML='<div class="empty">NO LOCATIONS — CLICK "+ LOCATION" TO BEGIN</div>';
+    refreshAllOrders();
     return;
   }
   c.innerHTML=D.locations.map(renderMaj).join('');
   restoreState();
   setupDrag();
+  refreshAllOrders();
 }
 
 function renderMajSummary(maj){
@@ -1156,17 +1159,8 @@ const UI={
       return (a.onum||'').localeCompare(b.onum||'');
     });
     document.getElementById('all-orders-list').innerHTML=
-      sorted.length===0?'<div class="empty">NO ORDERS YET</div>':
-      sorted.map(o=>{
-        const src=getMin(o.srcId), dst=getMin(o.dstId);
-        const best=getBest(o);
-        return `<div class="ao-row">
-          <span class="ao-num">#${esc(o.onum||o.id.slice(-4))}</span>
-          ${o.type?`<span class="ord-type">${esc(o.type)}</span>`:''}
-          <span class="ao-info">${o.cargo?`<strong style="color:var(--text-bright)">${esc(o.cargo)}</strong> · `:''}${src?esc(src.name):'?'} → ${dst?esc(dst.name):'?'}</span>
-          ${best?gradeHTML(best.grade):''}
-        </div>`;
-      }).join('');
+      sorted.length===0?'<div class="empty" style="padding:20px 28px;">NO ORDERS YET</div>':
+      sorted.map(o=>renderOrd(o,'all','OUT')).join('');
     UI.open('m-all-orders');
   }
 };
