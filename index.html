@@ -573,6 +573,8 @@ body::after{
       <label class="tlbl" for="ot-RETRIEVAL">RETRIEVAL</label>
       <input type="radio" class="tchk" id="ot-ELIMINATION" name="f-type" value="ELIMINATION">
       <label class="tlbl" for="ot-ELIMINATION">ELIMINATION</label>
+      <input type="radio" class="tchk" id="ot-CONNECT-QPID" name="f-type" value="CONNECT Q-PID">
+      <label class="tlbl" for="ot-CONNECT-QPID">CONNECT Q-PID</label>
     </div>
   </div>
   <div class="ff" style="margin-bottom:12px">
@@ -1219,7 +1221,6 @@ const App={
   saveOrder(){
     const srcId=document.getElementById('f-src').value;
     const dstId=document.getElementById('f-dst').value;
-    if(!srcId||!dstId){ toast('SOURCE AND DESTINATION REQUIRED','err'); return; }
     const onum=document.getElementById('f-onum').value.trim();
     if(onum&&D.orders.some(o=>o.onum===onum&&o.id!==_editOid)){ toast('ORDER NUMBER ALREADY EXISTS','err'); return; }
     const mods=MODS.filter(m=>{ const cb=document.getElementById(`mc-${m}`); return cb&&cb.checked; });
