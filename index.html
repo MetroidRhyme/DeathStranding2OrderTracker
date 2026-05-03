@@ -441,7 +441,7 @@ body::after{
 .gbtn.sel[data-g="C"]{color:#ff8c00;border-color:#ff8c00;background:rgba(255,140,0,0.12);}
 .gbtn.sel[data-g="B"]{color:#ffd700;border-color:#ffd700;background:rgba(255,215,0,0.1);}
 .gbtn.sel[data-g="A"]{color:#00ff99;border-color:#00ff99;background:rgba(0,255,153,0.1);}
-.gbtn.sel[data-g="S"]{color:#00d4ff;border-color:#00d4ff;background:rgba(0,212,255,0.12);box-shadow:0 0 12px rgba(0,212,255,0.25);}
+.gbtn.sel[data-g="S"],.gbtn.sel[data-g="TTW"]{color:#00d4ff;border-color:#00d4ff;background:rgba(0,212,255,0.12);box-shadow:0 0 12px rgba(0,212,255,0.25);}
 
 /* modal actions */
 .macts{
@@ -629,7 +629,8 @@ body::after{
   <div id="del-lookup" style="margin-bottom:14px;display:none;">
     <label class="fl">Order Number</label>
     <input class="fi" id="f-del-onum" placeholder="Enter order number..."
-      onkeydown="if(event.key==='Enter')App.saveDelivery()" style="margin-top:5px;">
+      onkeydown="if(event.key==='Enter')App.saveDelivery()"
+      onblur="UI.syncGradeBtn()" style="margin-top:5px;">
   </div>
   <div id="del-info" style="margin-bottom:18px;padding:9px;border:1px solid var(--border);font-size:11px;color:var(--text-dim);letter-spacing:1px;line-height:1.6;display:none;"></div>
   <div class="ff" style="margin-bottom:18px">
@@ -1138,21 +1139,13 @@ const UI={
   },
 
   openLogDel(oid){
-    _delGrade=null;
     document.getElementById('f-likes').value='';
-    document.querySelectorAll('#grade-input .gbtn').forEach(b=>b.classList.remove('sel'));
-    // Restore S button in case a previous standard order swapped it to TTW
-    const ttwBtn=document.querySelector('#grade-input .gbtn[data-g="TTW"]');
-    if(ttwBtn){ ttwBtn.dataset.g='S'; ttwBtn.textContent='S'; }
     const lookup=document.getElementById('del-lookup');
     const info=document.getElementById('del-info');
     if(oid){
       const o=D.orders.find(x=>x.id===oid);
       if(!o)return;
-      if(o.orderClass==='STANDARD'){
-        const sBtn=document.querySelector('#grade-input .gbtn[data-g="S"]');
-        if(sBtn){ sBtn.dataset.g='TTW'; sBtn.textContent='TTW'; }
-      }
+      UI.syncGradeBtn(o);
       document.getElementById('del-oid').value=oid;
       const src=getMin(o.srcId), dst=getMin(o.dstId);
       info.innerHTML=
@@ -1169,6 +1162,24 @@ const UI={
       setTimeout(()=>document.getElementById('f-del-onum').focus(),80);
     }
     UI.open('m-delivery');
+  },
+
+  syncGradeBtn(order){
+    // Restore S first
+    const ttwBtn=document.querySelector('#grade-input .gbtn[data-g="TTW"]');
+    if(ttwBtn){ ttwBtn.dataset.g='S'; ttwBtn.textContent='S'; }
+    // Resolve order if not passed directly
+    if(!order){
+      const num=document.getElementById('f-del-onum')?.value.trim();
+      if(num) order=D.orders.find(o=>o.onum===num);
+    }
+    if(order?.orderClass==='STANDARD'){
+      const sBtn=document.querySelector('#grade-input .gbtn[data-g="S"]');
+      if(sBtn){ sBtn.dataset.g='TTW'; sBtn.textContent='TTW'; }
+    }
+    // Clear grade selection since the order context changed
+    _delGrade=null;
+    document.querySelectorAll('#grade-input .gbtn').forEach(b=>b.classList.remove('sel'));
   },
 
   setGrade(g){
