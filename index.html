@@ -570,8 +570,8 @@ body::after{
     <div class="type-grid">
       <input type="radio" class="tchk" id="ot-DELIVERY" name="f-type" value="DELIVERY">
       <label class="tlbl" for="ot-DELIVERY">DELIVERY</label>
-      <input type="radio" class="tchk" id="ot-RETRIEVAL" name="f-type" value="RETRIEVAL">
-      <label class="tlbl" for="ot-RETRIEVAL">RETRIEVAL</label>
+      <input type="radio" class="tchk" id="ot-RECOVERY" name="f-type" value="RECOVERY">
+      <label class="tlbl" for="ot-RECOVERY">RECOVERY</label>
       <input type="radio" class="tchk" id="ot-ELIMINATION" name="f-type" value="ELIMINATION">
       <label class="tlbl" for="ot-ELIMINATION">ELIMINATION</label>
       <input type="radio" class="tchk" id="ot-CONNECT-QPID" name="f-type" value="CONNECT Q-PID">
@@ -1016,7 +1016,8 @@ function renderOrd(order,minId,dir){
                 <span class="hist-date">${fmtDate(r.at)}</span>
                 ${gradeHTML(r.grade)}
                 <span class="hist-time">${fmtLikes(r.likes)}</span>
-                ${r.id===best?.id?'<span style="font-size:8px;letter-spacing:2px;color:var(--green);margin-left:auto">BEST</span>':''}
+                ${r.id===best?.id?'<span style="font-size:8px;letter-spacing:2px;color:var(--green);margin-left:auto">BEST</span>':'<span style="margin-left:auto"></span>'}
+                <button class="btn btn-sm btn-red" onclick="App.delRun('${order.id}','${r.id}')">DEL</button>
               </div>`).join('')}
           </div>`:''}
       </div>`:''}
@@ -1262,6 +1263,12 @@ const App={
     if(!confirm('Delete this order and all run history?')) return;
     D.orders=D.orders.filter(o=>o.id!==id);
     saveD(); render(); toast('ORDER REMOVED');
+  },
+  delRun(oid,rid){
+    const o=D.orders.find(x=>x.id===oid);
+    if(!o)return;
+    o.runs=o.runs.filter(r=>r.id!==rid);
+    saveD(); render(); toast('RUN REMOVED');
   },
 
   saveDelivery(){
