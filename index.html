@@ -423,6 +423,8 @@ body::after{
 .g-B{color:#ffd700;border-color:rgba(255,215,0,0.5);background:rgba(255,215,0,0.07);}
 .g-A{color:#00ff99;border-color:rgba(0,255,153,0.5);background:rgba(0,255,153,0.08);}
 .g-S{color:#00d4ff;border-color:rgba(0,212,255,0.55);background:rgba(0,212,255,0.1);box-shadow:0 0 8px rgba(0,212,255,0.15);}
+.g-TTW{color:#00d4ff;border-color:rgba(0,212,255,0.55);background:rgba(0,212,255,0.1);box-shadow:0 0 8px rgba(0,212,255,0.15);}
+#all-orders-list .dir-badge{display:none;}
 
 /* grade selector input */
 .grade-input{display:flex;gap:8px;}
@@ -578,6 +580,15 @@ body::after{
     </div>
   </div>
   <div class="ff" style="margin-bottom:12px">
+    <label class="fl">Order Class</label>
+    <div class="type-grid">
+      <input type="radio" class="tchk" id="oc-MAIN" name="f-order-class" value="MAIN">
+      <label class="tlbl" for="oc-MAIN">MAIN ORDER</label>
+      <input type="radio" class="tchk" id="oc-SUB" name="f-order-class" value="SUB">
+      <label class="tlbl" for="oc-SUB">SUB ORDER</label>
+    </div>
+  </div>
+  <div class="ff" style="margin-bottom:12px">
     <label class="fl">Modifiers</label>
     <div class="mod-grid" id="mod-grid"></div>
   </div>
@@ -627,7 +638,7 @@ body::after{
       <span class="gbtn" data-g="C" onclick="UI.setGrade('C')">C</span>
       <span class="gbtn" data-g="B" onclick="UI.setGrade('B')">B</span>
       <span class="gbtn" data-g="A" onclick="UI.setGrade('A')">A</span>
-      <span class="gbtn" data-g="S" onclick="UI.setGrade('S')">S</span>
+      <span class="gbtn" data-g="S" onclick="UI.setGrade(this.dataset.g)">S</span>
     </div>
   </div>
   <div class="fg">
@@ -657,8 +668,8 @@ body::after{
 //  DATA
 // ══════════════════════════════════════════════
 const SK = 'ds2ot_v3';
-const MODS = ['FRAGILE','EXPLOSIVE','SPECIAL','LIVE','PRIORITY','RUSH','HEAVY','OVERSIZED'];
-const GRADE_RANK = {D:1,C:2,B:3,A:4,S:5};
+const MODS = ['BREAKABLE CARGO'];
+const GRADE_RANK = {D:1,C:2,B:3,A:4,S:5,TTW:5};
 
 let D = {locations:[],orders:[]};
 
@@ -1100,6 +1111,7 @@ const UI={
     document.getElementById('f-src').value='';
     document.getElementById('f-dst').value='';
     document.querySelectorAll('.tchk').forEach(r=>r.checked=false);
+    document.getElementById('oc-MAIN').checked=true;
     UI.open('m-order');
   },
   openEditOrder(oid){
@@ -1117,6 +1129,7 @@ const UI={
     document.getElementById('f-src').value=o.srcId||'';
     document.getElementById('f-dst').value=o.dstId||'';
     document.querySelectorAll('.tchk').forEach(r=>r.checked=false);
+    document.getElementById(o.subOrder?'oc-SUB':'oc-MAIN').checked=true;
     if(o.type){ const r=document.getElementById(`ot-${o.type}`); if(r)r.checked=true; }
     (o.mods||[]).forEach(m=>{ const cb=document.getElementById(`mc-${m}`); if(cb)cb.checked=true; });
     UI.open('m-order');
@@ -1126,11 +1139,18 @@ const UI={
     _delGrade=null;
     document.getElementById('f-likes').value='';
     document.querySelectorAll('#grade-input .gbtn').forEach(b=>b.classList.remove('sel'));
+    // Always restore S button in case a previous sub-order swapped it to TTW
+    const ttwBtn=document.querySelector('#grade-input .gbtn[data-g="TTW"]');
+    if(ttwBtn){ ttwBtn.dataset.g='S'; ttwBtn.textContent='S'; }
     const lookup=document.getElementById('del-lookup');
     const info=document.getElementById('del-info');
     if(oid){
       const o=D.orders.find(x=>x.id===oid);
       if(!o)return;
+      if(o.subOrder){
+        const sBtn=document.querySelector('#grade-input .gbtn[data-g="S"]');
+        if(sBtn){ sBtn.dataset.g='TTW'; sBtn.textContent='TTW'; }
+      }
       document.getElementById('del-oid').value=oid;
       const src=getMin(o.srcId), dst=getMin(o.dstId);
       info.innerHTML=
@@ -1232,6 +1252,7 @@ const App={
       pkg:parseFloat(document.getElementById('f-pkg').value)||null,
       wgt:parseFloat(document.getElementById('f-wgt').value)||null,
       type:typeEl?typeEl.value:'',
+      subOrder:document.getElementById('oc-SUB').checked,
       mods,
       notes:document.getElementById('f-notes').value.trim()
     };
